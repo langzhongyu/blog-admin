@@ -1,5 +1,5 @@
 var express = require('express')
-var User = require('./user')
+var User = require('../db/user')
 var bodyParser = require('body-parser')
 var md5 = require('blueimp-md5')
 
@@ -43,7 +43,7 @@ router.post('/login', function (req, res) {
             })
         }
 
-        // 登陆成功，通过session记录登陆状态
+        // 登陆成功，通过session记录登陆状态。
         req.session.user = user
 
         // 成功状态
@@ -53,6 +53,12 @@ router.post('/login', function (req, res) {
             message: 'OK'
         })
     })
+})
+
+// 退出登陆
+router.get('/logout', function (req, res) {
+    req.session.user = null
+    res.redirect('/login')
 })
 
 router.get('/register', function (req, res) {
@@ -82,7 +88,8 @@ router.post('/register', function (req, res) {
             })
             return res.send('邮箱或者用户名已存在！,请重新注册~')
         }
-        body.password = md5(md5(body.password))
+        // 两次加密，并且加入随机字符，防止别人破解密码
+        body.password = md5(md5(body.password) + 'itcast')
         new User(body).save(function (err, user) {
             if (err) {
                 return res.status(500).json({
@@ -99,9 +106,14 @@ router.post('/register', function (req, res) {
     })
 })
 
+router.get('/add', function (req, res) {
+    res.render('add.html')
+})
+
 // 当页面不存在时触发
 router.use(function(req, res, next) {
 	res.render('error.html')
 });
+
 
 module.exports = router
